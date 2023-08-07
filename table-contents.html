@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Módulo 5: Criação de API</title>
+</head>
+<body>
+
+<h1>Módulo 5: Criação de API</h1>
+<p>14 aulas</p>
+
+<pre>
+b7-nodejs-mod05-criacao-api
+
+
+<h3>#1: O que é uma API?</h3>
+
+Aplication Programming Interface
+Interface de Programação de Aplicações
+
+??? Isso não explica absolutamente nada.
+
+Resposta: de forma grosseira, API é um INTERMEDIÁRIO entre 
+um sistema e outro sistema. Pode ser um sistema um servidor, 
+site, aplicativo, software
+
+
+
+<hr>
+<h3>#2: O REST e RESTful</h3>
+
+login com facebook com códigos.
+baixa o código fornecido pelo facebook e insere
+no código do sistema.
+
+URL, através de uma url
+
+    -webservices
+
+    -REST, Representational State Transfer
+    não se trata de uma coisa, se trata de uma teoria, um padrão.
+
+    -RESTful, é o sistema que usa o padrão REST
+
+
+    --- 
+
+    Endpoint:
+
+    GET https://meusite.com.br/api/users
+    GET https://meusite.com.br/api/users/10
+    PUT https://meusite.com.br/api/users/10 (name: 'bonieky', age: 90)
+    POST https://meusite.com.br/api/users/10 (name: 'bonieky', age: 90)
+    DELETE https://meusite.com.br/api/users/10
+
+
+<hr>
+<h3>#3: Criando o projeto base da API</h3>
+
+aula03-criando-api
+
+Organizar, estrutura básica:
+- express
+- variáveis ambiente
+- banco dados: postgreesql
+- sequelize (orm)
+
+$ npm install dotenv express pg pg-hstore sequelize validator
+
+Instalar os @types
+
+$ tsc --init
+
+--- 
+aula03-criando-api/tsconfig.json
+--- 
+"target": "es6",
+"rootDir": "./src",
+"outDir": "./dist",
+"moduleResolution": "node",
+
+criar pastinha /SRC
+
+Instalar os types:
+npm install --save-dev @types/express @types/node @types/sequelize @types/validator
+
+--- 
+iniciar o servidor, primeiras configurações
+--- 
+aula03-criando-api/src/server.ts
+
+
+
+<hr>
+<h3>#4: Criando uma API simples</h3>
+
+1) criar rotas
+criar uma API é similar a criar um site
+a diferença é que não vai ter o retorno gráfico
+
+--- 
+aula03-criando-api/src/routes/api.ts
+--- 
+
+
+import { Router } from 'express';
+
+const router = Router();
+
+router.get('/ping', (req, res) => {
+    res.json({pong: true});
+});
+
+router.get('/random', (req, res) => {
+    let nRand: number = Math.floor( Math.random() * 10 );
+    res.json({number: nRand});
+});
+
+router.get('/nome/:nome', (req, res) => {
+    let nome: string = req.params.nome;
+    res.json({nome: `Você enviou o nome: ${nome}`});
+});
+
+
+
+
+export default router;
+
+
+--- 
+aula03-criando-api/src/server.ts
+--- 
+
+import express, { Request, Response } from 'express';
+import path from 'path';
+import dotenv from 'dotenv';
+
+import apiRoutes from './routes/api';
+
+
+dotenv.config();
+
+const server = express();
+
+server.use(express.static(path.join(__dirname, '../public')));
+
+server.use(express.urlencoded({extended:true}));
+
+server.use(apiRoutes);
+
+server.use((req: Request, res: Response) => {
+    res.status(404);
+    res.json({error: 'Endpoint não encontrado.'});
+});
+
+server.listen(process.env.PORT);
+console.log('site rodando em: http://localhost:4000/');
+
+
+
+<hr>
+<h3>#5: Entendendo o que é CORS</h3>
+
+Cross-origin Resource Sharing
+"Troca de recursos de origem diferente"
+
+Testar: https://resttesttest.com/
+
+bloqueio 1: Access-Control-Allow-Origin
+
+bloqueio 2: por method. precisam liberados tb.
+
+quem está sendo acessado é quem permite o acesso: 
+Access-Control-Allow-Method
+
+https://www.npmjs.com/package/cors
+$ npm install -D @types/cors
+
+"-D" = --save-dev
+
+--- 
+aula03-criando-api/src/server.ts 
+--- 
+import cors from 'cors';
+
+server.use(cors({
+    // origin: '*'
+    origin: 'https://resttesttest.com',
+    methods: ['GET', 'POST']
+}));
+
+<hr>
+<h3>#6: Introdução ao Postman</h3>
+
+https://www.postman.com/
+
+similar ao postman: https://insomnia.rest/
+
+<hr>
+<h3>#7: Planejando uma API</h3>
+
+criar uma API sobre frases.
+
+salvar, frase e autor
+inserir, ler, editar, deletar
+
+API é um conjunto de CRUDs (create read update delete)
+
+Por exemplo, uma Loja virtual lida com:
+    usuarios (crud)
+    produtos (crud)
+    vendas (crud)
+
+--- 
+SISTEMA: crud de frases
+--- 
+
+    GET /frases - criar frases novas (CREATE)
+    GET /frases - listar todas as frases (READ)
+    GET /frase/123 - pegar informações de uma frase (READ)
+    PUT /frase/123 - atualizar (UPDATE)
+    DELETE /frase/123 - deletar uma frase (DELETE)
+
+    acabados de criar os endpoints
+
+    Pode-se criar endpoints específicos para outras tarefas, por exemplo:
+
+    exemplo: todo list, 
+    endpoint específico para marcar uma tarefa como feita.
+    outra para deletar todas as que foram realizadas. + 1 endpoint p isso.
+
+    Então temos aqui uma idéia de planejamento;
+    Primeiro cria o CRUD e depois vai criando os itens específicoso para
+    que o sistema faça tudo o que ele precisa fazer.
+
+    antes de planejar uma API é necessário saber tudo o que o sistema 
+    precisa fazer. ANÁLISE DE REQUISITOS.
+
+
+    --- 
+    VAMOS CRIAR O BANCO DE DADOS 
+    --- 
+
+    MAMP, DBeaver
+
+    banco: b7-nodejs-frases01
+    tables: author, phrases, id
+
+<hr>
+<h3>#8: Criando os models, instances e controllers</h3>
+
+criar pastas:
+    controllers 
+    models 
+    instances 
+
+
+
+<hr>
+<h3>#9: Criando uma frase nova</h3>
+
+Ao executar a Rota no postman um erro foi gerado.
+
+export const createPhrase = async (req: Request, res: Response) => {
+    let { author, txt } = req.body;
+    let newPhrase = await Phrase.create({ author, txt });
+    res.json({ id: newPhrase.id, author, txt });
+    // console.log(req.body);
+    // res.json({corpo: req.body});
+}
+
+>> Error: Please install mysql2 package manually
+>> npm install mysql2 --save
+
+--- 
+https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Status
+---
+
+
+Agora, com status 201, ficou padrão REST
+
+
+export const createPhrase = async (req: Request, res: Response) => {
+    let { author, txt } = req.body;
+    let newPhrase = await Phrase.create({ author, txt });
+    res.status(201);
+    res.json({ id: newPhrase.id, author, txt });
+}
+
+<hr>
+<h3>#10: Entendendo HTTP Status Code</h3>
+
+--- 
+https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Status
+---
+<hr>
+<h3>#11: Pegando uma ou mais frases</h3>
+
+
+export const listPhrase = async (req: Request, res: Response) => {
+    let list = await Phrase.findAll();
+    res.json({ list });
+}
+
+
+export const getPhrase = async (req: Request, res: Response) => {
+    let { id } = req.params;
+    let phrase = await Phrase.findByPk(id);
+
+    if(phrase){
+        res.json({ phrase });
+    } else {
+        res.json({ error: 'Frase não encontrada' });
+    }
+}
+
+
+
+router.post('/frases', ApiController.createPhrase);
+router.get('/frases', ApiController.listPhrase);
+router.get('/frase/:id', ApiController.getPhrase);
+router.put('/frase/:id', ApiController.updatePhrase);
+
+<hr>
+<h3>#12: Editando uma frase</h3>
+
+export const updatePhrase = async (req: Request, res: Response) => {
+    let { id } = req.params; 
+    let { author, txt } = req.body;
+
+    let phrase = await Phrase.findByPk(id);
+    if(phrase){
+
+        phrase.author = author;
+        phrase.txt = txt;
+        await phrase.save();
+        res.json({phrase});
+        
+    } else {
+        res.json({ error: 'Frase não encontrada' });
+    }
+}
+
+<hr>
+<h3>#13: Deletando uma frase</h3>
+
+
+export const deletePhrase = async (req: Request, res: Response) => {
+    let { id } = req.params; 
+    await Phrase.destroy({ where: { id } });
+    res.json({});
+}
+
+
+<hr>
+<h3>#14: Pegando uma frase aleatória</h3>
+
+*obs: tomar cuidado com a ordem das rotas em api.ts
+
+o fixo põe primeiro
+o dinâmico põe depois
+
+
+--- 
+aula03-criando-api/src/routes/api.ts 
+---
+
+import { Router } from 'express';
+
+import * as ApiController from '../controllers/apiController';
+
+const router = Router();
+
+router.get('/ping', ApiController.ping);
+router.get('/random', ApiController.random);
+router.get('/nome/:nome', ApiController.nome);
+
+router.post('/frases', ApiController.createPhrase);
+router.get('/frases', ApiController.listPhrase);
+router.get('/frase/aleatoria', ApiController.randomPhrase);
+router.get('/frase/:id', ApiController.getPhrase);
+router.put('/frase/:id', ApiController.updatePhrase);
+router.delete('/frase/:id', ApiController.deletePhrase);
+
+
+
+export default router;
+
+
+--- 
+aula03-criando-api/src/controllers/apiController.ts
+--- 
+
+
+export const randomPhrase = async (req: Request, res: Response) => {
+
+    let phrase = await Phrase.findOne({
+        order: [
+            Sequelize.fn('RAND')
+        ]
+    });
+
+    if(phrase){
+        res.json({ phrase });
+    } else {
+        res.json({ error: 'Frase não encontrada' });
+    }
+}
+
+
+<hr />
+…or create a new repository on the command line
+
+echo "# blablabla" >> README.md
+git init
+git add README.md
+git commit -m "first commit"
+git branch -M main
+git remote add origin https://github.com/betoside/blablabla.git
+git push -u origin main
+
+
+
+====
+…or push an existing repository from the command line
+
+git remote add origin https://github.com/betoside/blablabla.git
+git branch -M main
+git push -u origin main
+
+https://github.com/betoside/b7-nodejs-mod05-criacao-api.git
+
+
+</pre>
+
+</body>
+</html>
